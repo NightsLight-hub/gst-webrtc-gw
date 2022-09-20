@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{0df8de22-2a1e-4f77-a4bd-bfa467c39e9a}</ProjectGuid>
-    <RootNamespace>demo1</RootNamespace>
+    <ProjectGuid>{976deb36-bb0b-483e-98f5-a35c044185c2}</ProjectGuid>
+    <RootNamespace>demo2</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -147,16 +147,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="appsrc.h" />
+    <ClCompile Include="helper.cpp" />
+    <ClCompile Include="multiple_rtp_compositor.cpp" />
+    <ClCompile Include="RtpVp8Decoder.cpp" />
+    <ClCompile Include="RtpH264Encoder.cpp" />
+    <ClCompile Include="serverUpdSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="appsrc_rtp_vp8.cpp" />
-    <ClCompile Include="appsrc_rtp_vp8_appsink.cpp" />
-    <ClCompile Include="rtp_forward.cpp" />
-    <ClCompile Include="rtp_vp82.cpp" />
-    <ClCompile Include="rtp_vp8_composite.cpp" />
-    <ClCompile Include="serverTCPSocket.cpp" />
-    <ClCompile Include="serverUDPSocket.cpp" />
+    <ClInclude Include="compositor.h" />
+    <ClInclude Include="helper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <WinSock2.h>
 #include <iostream>
-#include "appsrc.h"
+#include "compositor.h"
 #include <thread>
 #include <chrono>
 #include <atomic>
@@ -10,12 +10,12 @@
 
 
 using namespace std;
-#define RECEIVER_ADDRESS "172.18.39.162"
+#define RECEIVER_ADDRESS "127.0.0.1"
 #define PORT 3000
 
 SOCKET recvSocket = NULL;
 atomic<bool> syncFlag = false;
-static RtpVp8AppSink* entrypoint;
+static MultipleRtpVp8Sink* entrypoint;
 
 void rtpvp8() {
 	entrypoint->entrypoint(&syncFlag);
@@ -45,7 +45,7 @@ int main()
 	recvSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (SOCKET_ERROR == recvSocket) {
 		printf("Create Socket Error!");
-		
+
 	}
 
 	// 创建一个SOCKADDR_IN结构，指定接收端地址信息
@@ -59,17 +59,19 @@ int main()
 		printf("bind error with ErrorNum %d\n", WSAGetLastError());
 		exitP();
 	}
-	entrypoint = new(RtpVp8AppSink);
+	entrypoint = new(MultipleRtpVp8Sink);
 	thread t(rtpvp8);
 	// 接收数据报
 	while (!syncFlag.load()) {
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
-	
+
 	while (syncFlag.load()) {
 		ret = recvfrom(recvSocket, recvBuf, recvBufLength, 0, (SOCKADDR*)&senderAddr, &senderAddrLength);
-		if (ret > 0) {
-			entrypoint->gstreamer_receive_push_buffer(recvBuf, ret);
+		if (ret > 10) {
+			void* rtpStartPoint = recvBuf + 10;
+			char* sp = recvBuf;
+			entrypoint->gstreamer_receive_push_buffer(rtpStartPoint, ret - 10, sp[0]);
 		}
 	}
 	delete(entrypoint);
