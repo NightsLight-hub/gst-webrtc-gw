@@ -2,4 +2,4 @@
 #include <string>
 #include <gst/gst.h>
 
-void buildName(string parentName, string elementName, gchar* target, int length);
+void buildName(std::string parentName, std::string elementName, gchar* target, int length);

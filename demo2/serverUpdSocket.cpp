@@ -69,7 +69,7 @@ int main()
 	while (syncFlag.load()) {
 		ret = recvfrom(recvSocket, recvBuf, recvBufLength, 0, (SOCKADDR*)&senderAddr, &senderAddrLength);
 		if (ret > 10) {
-			void* rtpStartPoint = recvBuf + 10;
+			void* rtpStartPoint = (char*)recvBuf + 10;
 			char* sp = recvBuf;
 			entrypoint->gstreamer_receive_push_buffer(rtpStartPoint, ret - 10, sp[0]);
 		}

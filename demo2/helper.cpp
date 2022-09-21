@@ -9,5 +9,5 @@ void buildName(string parentName, string elementName, gchar* target, int length)
 		g_printerr("target length is less than result");
 		exit(1);
 	}
-	strcpy(target, ret.c_str());
+	strcpy_s(target, length, ret.c_str());
 }

@@ -149,9 +149,12 @@
   <ItemGroup>
     <ClCompile Include="helper.cpp" />
     <ClCompile Include="multiple_rtp_compositor.cpp" />
+    <ClCompile Include="multiple_rtp_compositor_autovideosink.cpp" />
     <ClCompile Include="RtpVp8Decoder.cpp" />
     <ClCompile Include="RtpH264Encoder.cpp" />
+    <ClCompile Include="rtpVp9Decoder.cpp" />
     <ClCompile Include="serverUpdSocket.cpp" />
+    <ClCompile Include="videoPlay.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compositor.h" />

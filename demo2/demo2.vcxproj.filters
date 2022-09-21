@@ -30,6 +30,15 @@
     <ClCompile Include="RtpH264Encoder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="videoPlay.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="multiple_rtp_compositor_autovideosink.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="rtpVp9Decoder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compositor.h">
