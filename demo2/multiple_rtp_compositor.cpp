@@ -87,8 +87,13 @@ RtpVp8Decoder* MultipleRtpVp8Sink::addRtpVp8Deocoders() {
 	inputName << "rtpvp8decoder_" << rtpvp8DecodersCount;
 	RtpVp8Decoder* rtpVp8Decoder = new RtpVp8Decoder(inputName.str());
 	rtpVp8Decoders[rtpvp8DecodersCount] = rtpVp8Decoder;
-	gst_bin_add_many(GST_BIN(pipeline), rtpVp8Decoder->queue, rtpVp8Decoder->capsFilter, rtpVp8Decoder->rtpvp8depay, rtpVp8Decoder->vp8dec, rtpVp8Decoder->videoConvert, NULL);
+	/*gst_bin_add_many(GST_BIN(pipeline), rtpVp8Decoder->queue, rtpVp8Decoder->capsFilter, rtpVp8Decoder->rtpvp8depay, rtpVp8Decoder->vp8dec, rtpVp8Decoder->videoConvert, NULL);
 	if (!gst_element_link_many(rtpVp8Decoder->queue, rtpVp8Decoder->capsFilter, rtpVp8Decoder->rtpvp8depay, rtpVp8Decoder->vp8dec, rtpVp8Decoder->videoConvert, NULL)) {
+		g_printerr("Elements could not be linked.\n");
+		exit(1);
+	}*/
+	gst_bin_add_many(GST_BIN(pipeline), rtpVp8Decoder->queue, rtpVp8Decoder->capsFilter, rtpVp8Decoder->rtpvp8depay, rtpVp8Decoder->vp8dec, NULL);
+	if (!gst_element_link_many(rtpVp8Decoder->queue, rtpVp8Decoder->capsFilter, rtpVp8Decoder->rtpvp8depay, rtpVp8Decoder->vp8dec, NULL)) {
 		g_printerr("Elements could not be linked.\n");
 		exit(1);
 	}
@@ -191,6 +196,11 @@ int MultipleRtpVp8Sink::entrypoint(atomic<bool>* flag) {
 		decoder2_srcPad = gst_element_get_static_pad(rtpVp9Decoders[2]->videoConvert, "src");
 		decoder3_sinkPad = gst_element_get_static_pad(rtpVp9Decoders[3]->queue, "sink");
 		decoder3_srcPad = gst_element_get_static_pad(rtpVp9Decoders[3]->videoConvert, "src");
+		GstCaps* caps = gst_caps_from_string("video/x-raw, format=I420, width=640, height=360, framerate=20/1");
+		gst_pad_set_caps(decoder0_srcPad, caps);
+		gst_pad_set_caps(decoder1_srcPad, caps);
+		gst_pad_set_caps(decoder2_srcPad, caps);
+		gst_pad_set_caps(decoder3_srcPad, caps);
 	}
 	else {
 		addRtpVp8Deocoders();
@@ -198,13 +208,18 @@ int MultipleRtpVp8Sink::entrypoint(atomic<bool>* flag) {
 		addRtpVp8Deocoders();
 		addRtpVp8Deocoders();
 		decoder0_sinkPad = gst_element_get_static_pad(rtpVp8Decoders[0]->queue, "sink");
-		decoder0_srcPad = gst_element_get_static_pad(rtpVp8Decoders[0]->videoConvert, "src");
+		decoder0_srcPad = gst_element_get_static_pad(rtpVp8Decoders[0]->vp8dec, "src");
 		decoder1_sinkPad = gst_element_get_static_pad(rtpVp8Decoders[1]->queue, "sink");
-		decoder1_srcPad = gst_element_get_static_pad(rtpVp8Decoders[1]->videoConvert, "src");
+		decoder1_srcPad = gst_element_get_static_pad(rtpVp8Decoders[1]->vp8dec, "src");
 		decoder2_sinkPad = gst_element_get_static_pad(rtpVp8Decoders[2]->queue, "sink");
-		decoder2_srcPad = gst_element_get_static_pad(rtpVp8Decoders[2]->videoConvert, "src");
+		decoder2_srcPad = gst_element_get_static_pad(rtpVp8Decoders[2]->vp8dec, "src");
 		decoder3_sinkPad = gst_element_get_static_pad(rtpVp8Decoders[3]->queue, "sink");
-		decoder3_srcPad = gst_element_get_static_pad(rtpVp8Decoders[3]->videoConvert, "src");
+		decoder3_srcPad = gst_element_get_static_pad(rtpVp8Decoders[3]->vp8dec, "src");
+		GstCaps* caps = gst_caps_from_string("video/x-raw, format=I420, width=640, height=360, framerate=20/1");
+		gst_pad_set_caps(decoder0_srcPad, caps);
+		gst_pad_set_caps(decoder1_srcPad, caps);
+		gst_pad_set_caps(decoder2_srcPad, caps);
+		gst_pad_set_caps(decoder3_srcPad, caps);
 	}
 
 	GstPad* appsrc0Pad = gst_element_get_static_pad(appSrcs[0], "src");
@@ -234,9 +249,9 @@ int MultipleRtpVp8Sink::entrypoint(atomic<bool>* flag) {
 
 	// 连接 decoder 的src  到 compositor 上，配置compositor的布局
 	comp_sink0 = gst_element_request_pad_simple(compositor, "sink_%u");
-	g_object_set(comp_sink0, "width", WIDTH_640P, NULL);
-	g_object_set(comp_sink0, "height", HEIGHT_640P, NULL);
-	g_object_set(comp_sink0, "zorder", 10, NULL);
+	g_object_set(comp_sink0, "width", WIDTH_360P, NULL);
+	g_object_set(comp_sink0, "height", HEIGHT_360P, NULL);
+	//g_object_set(comp_sink0, "zorder", 10, NULL);
 	if (gst_pad_link(decoder0_srcPad, comp_sink0) != GST_PAD_LINK_OK) {
 		g_printerr("rtpVp8Decoders[0]->srcPad, comp_sink1 could not be linked.\n");
 		gst_object_unref(pipeline);
@@ -244,10 +259,10 @@ int MultipleRtpVp8Sink::entrypoint(atomic<bool>* flag) {
 	}
 
 	comp_sink1 = gst_element_request_pad_simple(compositor, "sink_%u");
-	g_object_set(comp_sink1, "xpos", WIDTH_640P, NULL);
-	g_object_set(comp_sink1, "width", WIDTH_640P, NULL);
-	g_object_set(comp_sink1, "height", HEIGHT_640P, NULL);
-	g_object_set(comp_sink1, "zorder", 100, NULL);
+	g_object_set(comp_sink1, "xpos", WIDTH_360P, NULL);
+	g_object_set(comp_sink1, "width", WIDTH_360P, NULL);
+	g_object_set(comp_sink1, "height", HEIGHT_360P, NULL);
+	//g_object_set(comp_sink1, "zorder", 100, NULL);
 	if (gst_pad_link(decoder1_srcPad, comp_sink1) != GST_PAD_LINK_OK) {
 		g_printerr("rtpVp8Decoders[1]->srcPad, comp_sink2 could not be linked.\n");
 		gst_object_unref(pipeline);
@@ -255,10 +270,10 @@ int MultipleRtpVp8Sink::entrypoint(atomic<bool>* flag) {
 	}
 
 	comp_sink2 = gst_element_request_pad_simple(compositor, "sink_%u");
-	g_object_set(comp_sink2, "ypos", HEIGHT_640P, NULL);
-	g_object_set(comp_sink2, "width", WIDTH_640P, NULL);
-	g_object_set(comp_sink2, "height", HEIGHT_640P, NULL);
-	g_object_set(comp_sink2, "zorder", 100, NULL);
+	g_object_set(comp_sink2, "ypos", HEIGHT_360P, NULL);
+	g_object_set(comp_sink2, "width", WIDTH_360P, NULL);
+	g_object_set(comp_sink2, "height", HEIGHT_360P, NULL);
+	//g_object_set(comp_sink2, "zorder", 100, NULL);
 	if (gst_pad_link(decoder2_srcPad, comp_sink2) != GST_PAD_LINK_OK) {
 		g_printerr("rtpVp8Decoders[1]->srcPad, comp_sink2 could not be linked.\n");
 		gst_object_unref(pipeline);
@@ -266,11 +281,11 @@ int MultipleRtpVp8Sink::entrypoint(atomic<bool>* flag) {
 	}
 
 	comp_sink3 = gst_element_request_pad_simple(compositor, "sink_%u");
-	g_object_set(comp_sink3, "xpos", WIDTH_640P, NULL);
-	g_object_set(comp_sink3, "ypos", HEIGHT_640P, NULL);
-	g_object_set(comp_sink3, "width", WIDTH_640P, NULL);
-	g_object_set(comp_sink3, "height", HEIGHT_640P, NULL);
-	g_object_set(comp_sink3, "zorder", 100, NULL);
+	g_object_set(comp_sink3, "xpos", WIDTH_360P, NULL);
+	g_object_set(comp_sink3, "ypos", HEIGHT_360P, NULL);
+	g_object_set(comp_sink3, "width", WIDTH_360P, NULL);
+	g_object_set(comp_sink3, "height", HEIGHT_360P, NULL);
+	//g_object_set(comp_sink3, "zorder", 100, NULL);
 	if (gst_pad_link(decoder3_srcPad, comp_sink3) != GST_PAD_LINK_OK) {
 		g_printerr("rtpVp8Decoders[1]->srcPad, comp_sink2 could not be linked.\n");
 		gst_object_unref(pipeline);

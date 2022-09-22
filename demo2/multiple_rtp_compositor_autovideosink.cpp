@@ -155,8 +155,8 @@ int MultipleRtpVp8AutoVideoSink::entrypoint(atomic<bool>* flag) {
 	}
 
 	comp_sink1 = gst_element_request_pad_simple(compositor, "sink_%u");
-	g_object_set(comp_sink1, "width", WIDTH_640P/2, NULL);
-	g_object_set(comp_sink1, "height", HEIGHT_640P/2, NULL);
+	g_object_set(comp_sink1, "width", WIDTH_360P/2, NULL);
+	g_object_set(comp_sink1, "height", HEIGHT_360P/2, NULL);
 	g_object_set(comp_sink1, "zorder", 10, NULL);
 	GstPadLinkReturn padlinkRet = gst_pad_link(decoder0_srcPad, comp_sink1);
 	if (padlinkRet != GST_PAD_LINK_OK) {
@@ -166,9 +166,9 @@ int MultipleRtpVp8AutoVideoSink::entrypoint(atomic<bool>* flag) {
 	}
 
 	comp_sink2 = gst_element_request_pad_simple(compositor, "sink_%u");
-	g_object_set(comp_sink2, "xpos", WIDTH_640P/2, NULL);
-	g_object_set(comp_sink2, "width", WIDTH_640P/2, NULL);
-	g_object_set(comp_sink2, "height", HEIGHT_640P/2, NULL);
+	g_object_set(comp_sink2, "xpos", WIDTH_360P/2, NULL);
+	g_object_set(comp_sink2, "width", WIDTH_360P/2, NULL);
+	g_object_set(comp_sink2, "height", HEIGHT_360P/2, NULL);
 	g_object_set(comp_sink2, "zorder", 100, NULL);
 
 	if (gst_pad_link(decoder1_srcPad, comp_sink2) != GST_PAD_LINK_OK) {

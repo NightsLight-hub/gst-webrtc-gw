@@ -42,6 +42,7 @@ public:
 	RtpH264Encoder(std::string inputName);
 	std::string name;
 	GstElement* videoConvert;
+	GstElement* queue;
 	GstElement* x264enc;
 	GstElement* rtph264pay;
 	GstElement* rtpbin;
@@ -112,9 +113,9 @@ public:
 	RtpVp8Decoder* addRtpVp8Deocoders();
 };
 
-const int WIDTH_640P = 640;
-const int HEIGHT_640P = 320;
-const int WIDTH_1080P = 1080;
-const int HEIGHT_1080P = 720;
+const int WIDTH_360P = 640;
+const int HEIGHT_360P = 360;
+const int WIDTH_1080P = 1280;
+const int HEIGHT_1080P = 1080;
 
 void exitP();
