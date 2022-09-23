@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <atomic>
-#include "compositor.h"
+#include "videoCompositor.h"
 #include <exception>
 #include <iostream>
 #include <sstream>
@@ -11,12 +11,14 @@
 /// </summary>
 
 using namespace std;
-extern atomic<bool> syncFlag;
-static const string TARGET_HOST = "172.18.39.162";
-static const int Target_PORT = 50999;
 static const string codecName = "vp8";
 
-void MultipleRtpVp8Sink::gstreamer_receive_push_buffer(void* buffer, int len, char type) {
+MultipleRtpVp8Sink::MultipleRtpVp8Sink(string targetAddress, int targetPort) {
+	this->targetAddress = targetAddress;
+	this->targetPort = targetPort;
+}
+
+void MultipleRtpVp8Sink::receivePushBuffer(void* buffer, int len, char type) {
 	GstBuffer* gbuffer = gst_buffer_new_memdup(buffer, len);
 	switch (type) {
 	case '0':
@@ -153,14 +155,14 @@ int MultipleRtpVp8Sink::entrypoint(atomic<bool>* flag) {
 
 	this->pipeline = gst_pipeline_new("test-pipeline");
 
-	g_object_set(G_OBJECT(udpsink), "host", TARGET_HOST.c_str(), NULL);
-	g_object_set(G_OBJECT(udpsink), "port", Target_PORT, NULL);
+	g_object_set(G_OBJECT(udpsink), "host", targetAddress.c_str(), NULL);
+	g_object_set(G_OBJECT(udpsink), "port", targetPort, NULL);
 	g_object_set(G_OBJECT(udpsink), "async", FALSE, NULL);
 	g_object_set(G_OBJECT(udpsink), "sync", FALSE, NULL);
-	g_object_set(G_OBJECT(udpsinkRTCP), "host", TARGET_HOST.c_str(), NULL);
-	g_object_set(G_OBJECT(udpsinkRTCP), "port", 5001, NULL);
-	g_object_set(G_OBJECT(udpsinkRTCP), "async", FALSE, NULL);
-	g_object_set(G_OBJECT(udpsinkRTCP), "sync", FALSE, NULL);
+	//g_object_set(G_OBJECT(udpsinkRTCP), "host", targetAddress.c_str(), NULL);
+	//g_object_set(G_OBJECT(udpsinkRTCP), "port", 5001, NULL);
+	//g_object_set(G_OBJECT(udpsinkRTCP), "async", FALSE, NULL);
+	//g_object_set(G_OBJECT(udpsinkRTCP), "sync", FALSE, NULL);
 
 	gst_bin_add_many(GST_BIN(pipeline), appSrcs[0], appSrcs[1], appSrcs[2], appSrcs[3], compositor, udpsink, udpsinkRTCP, NULL);
 
@@ -173,7 +175,6 @@ int MultipleRtpVp8Sink::entrypoint(atomic<bool>* flag) {
 	if (gst_pad_link(rtph264paySrcPad, rtpbinSinkPad) != GST_PAD_LINK_OK) {
 		g_printerr("rtph264paySrcPad and rtpbinSinkPad could not be linked.\n");
 	}
-	//rtpH264Encoder->addToPipeline(&pipeline);
 	GstPad* decoder0_sinkPad;
 	GstPad* decoder0_srcPad;
 	GstPad* decoder1_sinkPad;
@@ -344,5 +345,6 @@ int MultipleRtpVp8Sink::entrypoint(atomic<bool>* flag) {
 	g_main_loop_unref(gstreamer_receive_main_loop);
 	gst_element_set_state(pipeline, GST_STATE_NULL);
 	gst_object_unref(pipeline);
+	flag->store(false);
 	return 0;
 }

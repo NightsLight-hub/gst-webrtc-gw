@@ -18,7 +18,7 @@
     <ClCompile Include="serverUpdSocket.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="multiple_rtp_compositor.cpp">
+    <ClCompile Include="multipleRtpVp8Comp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RtpVp8Decoder.cpp">
@@ -33,18 +33,45 @@
     <ClCompile Include="videoPlay.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="multiple_rtp_compositor_autovideosink.cpp">
+    <ClCompile Include="multipleRtpvp8CompAutovideosink.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="rtpVp9Decoder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="compositor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UpdReceiver.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MultipleRtpOpusComp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RtpOpusEncoder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RtpOpusDecoder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="compositor.h">
+    <ClInclude Include="videoCompositor.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="helper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="audioCompositor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="compositor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="rtpReceiver.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

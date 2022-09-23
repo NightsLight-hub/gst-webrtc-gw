@@ -147,17 +147,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="compositor.cpp" />
     <ClCompile Include="helper.cpp" />
-    <ClCompile Include="multiple_rtp_compositor.cpp" />
-    <ClCompile Include="multiple_rtp_compositor_autovideosink.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="MultipleRtpOpusComp.cpp" />
+    <ClCompile Include="multipleRtpVp8Comp.cpp" />
+    <ClCompile Include="multipleRtpvp8CompAutovideosink.cpp" />
+    <ClCompile Include="RtpOpusDecoder.cpp" />
+    <ClCompile Include="RtpOpusEncoder.cpp" />
     <ClCompile Include="RtpVp8Decoder.cpp" />
     <ClCompile Include="RtpH264Encoder.cpp" />
     <ClCompile Include="rtpVp9Decoder.cpp" />
     <ClCompile Include="serverUpdSocket.cpp" />
+    <ClCompile Include="UpdReceiver.cpp" />
     <ClCompile Include="videoPlay.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="audioCompositor.h" />
     <ClInclude Include="compositor.h" />
+    <ClInclude Include="rtpReceiver.h" />
+    <ClInclude Include="videoCompositor.h" />
     <ClInclude Include="helper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

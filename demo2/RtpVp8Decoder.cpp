@@ -1,4 +1,4 @@
-#include "compositor.h"
+#include "videoCompositor.h"
 #include "helper.h"
 #include <sstream>
 

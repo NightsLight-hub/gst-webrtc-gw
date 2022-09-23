@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <atomic>
-#include "compositor.h"
+#include "videoCompositor.h"
 #include <exception>
 #include <iostream>
 #include <sstream>
@@ -14,7 +14,7 @@ using namespace std;
 extern atomic<bool> syncFlag;
 static const string TARGET_HOST = "172.18.39.162";
 
-void MultipleRtpVp8AutoVideoSink::gstreamer_receive_push_buffer(void* buffer, int len, char type) {
+void MultipleRtpVp8AutoVideoSink::receivePushBuffer(void* buffer, int len, char type) {
 	GstBuffer* gbuffer = gst_buffer_new_memdup(buffer, len);
 	if (type == '0') {
 		gst_app_src_push_buffer((GstAppSrc*)appsrc1, gbuffer);
