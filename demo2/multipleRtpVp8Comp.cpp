@@ -8,17 +8,19 @@
 #include "gst/gstregistry.h"
 /// <summary>
 /// 用来将一个rtpvp8流复制成两路合并为一个rtp流，然后下沉到appsink中
+/// test pipeline:
+/// gst-launch-1.0 udpsrc port=5000 caps="application/x-rtp, payload=96, encoding-name=H264" ! rtph264depay ! decodebin ! videoconvert ! autovideosink
 /// </summary>
 
 using namespace std;
 static const string codecName = "vp8";
 
-MultipleRtpVp8Sink::MultipleRtpVp8Sink(string targetAddress, int targetPort) {
+MultipleRtpVp8Compositor::MultipleRtpVp8Compositor(string targetAddress, int targetPort) {
 	this->targetAddress = targetAddress;
 	this->targetPort = targetPort;
 }
 
-void MultipleRtpVp8Sink::receivePushBuffer(void* buffer, int len, char type) {
+void MultipleRtpVp8Compositor::receivePushBuffer(void* buffer, int len, char type) {
 	GstBuffer* gbuffer = gst_buffer_new_memdup(buffer, len);
 	switch (type) {
 	case '0':
@@ -38,7 +40,7 @@ void MultipleRtpVp8Sink::receivePushBuffer(void* buffer, int len, char type) {
 	}
 }
 
-static void handleMessage(GstBus* bus, GstMessage* msg, MultipleRtpVp8Sink* main) {
+static void handleMessage(GstBus* bus, GstMessage* msg, MultipleRtpVp8Compositor* main) {
 	GError* err;
 	gchar* debug_info;
 	switch (GST_MESSAGE_TYPE(msg)) {
@@ -84,7 +86,7 @@ static void handleMessage(GstBus* bus, GstMessage* msg, MultipleRtpVp8Sink* main
 	}
 }
 
-RtpVp8Decoder* MultipleRtpVp8Sink::addRtpVp8Deocoders() {
+RtpVp8Decoder* MultipleRtpVp8Compositor::addRtpVp8Deocoders() {
 	stringstream inputName;
 	inputName << "rtpvp8decoder_" << rtpvp8DecodersCount;
 	RtpVp8Decoder* rtpVp8Decoder = new RtpVp8Decoder(inputName.str());
@@ -102,7 +104,7 @@ RtpVp8Decoder* MultipleRtpVp8Sink::addRtpVp8Deocoders() {
 	return rtpVp8Decoders[rtpvp8DecodersCount++];
 }
 
-RtpVp9Decoder* MultipleRtpVp8Sink::addRtpVp9Deocoders() {
+RtpVp9Decoder* MultipleRtpVp8Compositor::addRtpVp9Deocoders() {
 	stringstream inputName;
 	inputName << "rtpvp9decoder_" << rtpvp9DecodersCount;
 	RtpVp9Decoder* rtpVp9Decoder = new RtpVp9Decoder(inputName.str());
@@ -116,12 +118,12 @@ RtpVp9Decoder* MultipleRtpVp8Sink::addRtpVp9Deocoders() {
 }
 
 /* Create a GLib Main Loop and set it to run */
-void MultipleRtpVp8Sink::mainLoop() {
+void MultipleRtpVp8Compositor::mainLoop() {
 	this->gstreamer_receive_main_loop = g_main_loop_new(NULL, FALSE);
 	g_main_loop_run(gstreamer_receive_main_loop);
 }
 
-void MultipleRtpVp8Sink::createAppSrc() {
+void MultipleRtpVp8Compositor::createAppSrc() {
 	char name[10];
 	sprintf_s(name, 10, "%s_%d", "src", appSrcCount);
 	GstElement* appsrc;
@@ -137,7 +139,7 @@ void MultipleRtpVp8Sink::createAppSrc() {
 //                              rtpvp8Decoder[1]
 /// </summary>
 
-int MultipleRtpVp8Sink::entrypoint(atomic<bool>* flag) {
+int MultipleRtpVp8Compositor::entrypoint(atomic<bool>* flag) {
 	GstPad* comp_sink0, * comp_sink1, * comp_sink2, * comp_sink3;
 	/* Initialize GStreamer */
 	gst_init(NULL, NULL);

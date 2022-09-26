@@ -4,10 +4,14 @@
 #include "helper.h"
 #include <sstream>
 
-using namespace std;
-static const string TARGET_HOST = "172.18.39.162";
-static const int Target_PORT = 51001;
+/// <summary>
+/// composite multiple opus rtp sessions to one G722 rtp session
+/// 
+/// test pipeline:
+/// gst-launch-1.0 udpsrc port=50001 caps="application/x-rtp, payload=9" ! queue ! rtpg722depay ! avdec_g722 ! audioresample ! audioconvert ! autoaudiosink
+/// </summary>
 
+using namespace std;
 static void handleMessage(GstBus* bus, GstMessage* msg, MultipleRtpOpusCompositor* main) {
 	GError* err;
 	gchar* debug_info;
@@ -95,26 +99,50 @@ void MultipleRtpOpusCompositor::receivePushBuffer(void* buffer, int len, char ty
 	}
 }
 
+
+void MultipleRtpOpusCompositor::addDecoders() {
+	stringstream inputName;
+	inputName << "rtpopusdecoder_" << decodersCount;
+	RtpOpusDecoder* decoder = new RtpOpusDecoder(inputName.str());
+	gst_bin_add_many(GST_BIN(pipeline), decoder->queue, decoder->capsfilter, decoder->rtpOpusDepay, decoder->opusDec, NULL);
+	GstPad* opusDecSinkPad = gst_element_get_static_pad(decoder->opusDec, "sink");
+	GstCaps* caps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved, rate=48000, channels=1");
+	gst_pad_set_caps(opusDecSinkPad, caps);
+	GstPad* rtpOpusDepaySrcPad = gst_element_get_static_pad(decoder->rtpOpusDepay, "src");
+	if (!gst_element_link_many(decoder->queue, decoder->capsfilter, decoder->rtpOpusDepay, NULL)) {
+		g_printerr("Elements could not be linked.\n");
+		exit(1);
+	}
+	GstPadLinkReturn ret = gst_pad_link(rtpOpusDepaySrcPad, opusDecSinkPad);
+	if (ret != GST_PAD_LINK_OK) {
+		g_printerr("rtpOpusDepaySrcPad, opusDecSinkPad could not be linked, reason is %d\n", ret);
+		gst_object_unref(pipeline);
+		return;
+	}
+	decoders[decodersCount++] = decoder;
+}
+
 int MultipleRtpOpusCompositor::entrypoint(atomic<bool>* flag) {
 	/* Initialize GStreamer */
 	gst_init(NULL, NULL);
 	pipeline = gst_pipeline_new("test-pipeline");
 	audioMixer = gst_element_factory_make("audiomixer", "audioMixer");
 	udpsink = gst_element_factory_make("udpsink", "udpsink1");
-	GstElement* audioConvert = gst_element_factory_make("audioconvert", "vc1");
-	GstElement* autoAudioSink = gst_element_factory_make("autoaudiosink", "avs1");
-	g_object_set(G_OBJECT(udpsink), "host", TARGET_HOST.c_str(), NULL);
-	g_object_set(G_OBJECT(udpsink), "port", Target_PORT, NULL);
+	/*GstElement* audioConvert = gst_element_factory_make("audioconvert", "vc1");
+	GstElement* autoAudioSink = gst_element_factory_make("autoaudiosink", "avs1");*/
+	g_object_set(G_OBJECT(udpsink), "host", this->targetAddress.c_str(), NULL);
+	g_object_set(G_OBJECT(udpsink), "port", this->targetPort, NULL);
 	g_object_set(G_OBJECT(udpsink), "async", FALSE, NULL);
 	g_object_set(G_OBJECT(udpsink), "sync", FALSE, NULL);
-
+	encoder = new RtpG722Encoder("rtpOpusEncoder");
+	gst_bin_add_many(GST_BIN(pipeline), encoder->audioConvert, encoder->rtpg722pay, encoder->avencG722, encoder->rtpbin, udpsink, NULL);
 	// add appsrc 
 	for (int i = 0; i < 4; i++) {
 		createAppSrc();
 		addDecoders();
 	}
 	// link appsrcs to decoders one by one
-	gst_bin_add_many(GST_BIN(pipeline), audioMixer, audioConvert, autoAudioSink, NULL);
+	gst_bin_add_many(GST_BIN(pipeline), audioMixer, /*audioConvert, autoAudioSink,*/ NULL);
 	for (int i = 0; i < 4; i++) {
 		GstPad* decoder_srcPad;
 		decoder_srcPad = gst_element_get_static_pad(decoders[i]->opusDec, "src");
@@ -123,7 +151,6 @@ int MultipleRtpOpusCompositor::entrypoint(atomic<bool>* flag) {
 			gst_object_unref(pipeline);
 			return -1;
 		}
-
 		// link decoder to audiomixer
 		GstPad* audioMixerSinkPad = gst_element_request_pad_simple(audioMixer, "sink_%u");
 		GstPadLinkReturn ret = gst_pad_link(decoder_srcPad, audioMixerSinkPad);
@@ -135,13 +162,35 @@ int MultipleRtpOpusCompositor::entrypoint(atomic<bool>* flag) {
 		//gst_element_release_request_pad(audioMixer, audioMixerSinkPad);
 	}
 
-	if (!gst_element_link_pads(audioMixer, "src", audioConvert, "sink")) {
+	if (!gst_element_link_pads(audioMixer, "src", encoder->audioConvert, "sink")) {
 		g_printerr("audioMixer, audioConvert could not be linked.\n");
 		gst_object_unref(pipeline);
 		return -1;
 	}
-	if (!gst_element_link_pads(audioConvert, "src", autoAudioSink, "sink")) {
+	if (!gst_element_link_pads(encoder->audioConvert, "src", encoder->avencG722, "sink")) {
+		g_printerr("audioMixer, audioConvert could not be linked.\n");
+		gst_object_unref(pipeline);
+		return -1;
+	}
+	if (!gst_element_link_pads(encoder->avencG722, "src", encoder->rtpg722pay, "sink")) {
 		g_printerr("audioConvert, autoAudioSink could not be linked.\n");
+		gst_object_unref(pipeline);
+		return -1;
+	}
+	GstPad* rtpOupsPaySrcPad = gst_element_get_static_pad(encoder->rtpg722pay, "src");
+	GstCaps* caps = gst_caps_from_string("application/x-rtp, media=audio, payload=9, clock-rate=8000, encoding-name=G722, encoding-params=1");
+	gst_pad_set_caps(rtpOupsPaySrcPad, caps);
+
+	GstPad* rtpbinSinkPad = gst_element_request_pad_simple(encoder->rtpbin, "send_rtp_sink_%u");
+	//GstPad* rtpbinsrcRtcpPad = gst_element_request_pad_simple(rtpbin, "send_rtcp_src_%u");
+	if (gst_pad_link(rtpOupsPaySrcPad, rtpbinSinkPad) != GST_PAD_LINK_OK) {
+		g_printerr("rtph264paySrcPad and rtpbinSinkPad could not be linked.\n");
+	}
+	GstPad* rtpOpusEncoderSrcPad = gst_element_get_static_pad(encoder->rtpbin, "send_rtp_src_0");
+	GstPad* updsinkSinkPad = gst_element_get_static_pad(udpsink, "sink");
+	GstPadLinkReturn padlinkRet = gst_pad_link(rtpOpusEncoderSrcPad, updsinkSinkPad);
+	if (GST_PAD_LINK_OK != padlinkRet) {
+		g_printerr("rtpOpusEncoderSrcPad, updsinkSinkPad could not be linked., ret is %d\n", padlinkRet);
 		gst_object_unref(pipeline);
 		return -1;
 	}
@@ -170,26 +219,4 @@ int MultipleRtpOpusCompositor::entrypoint(atomic<bool>* flag) {
 void MultipleRtpOpusCompositor::mainLoop() {
 	this->gstreamer_receive_main_loop = g_main_loop_new(NULL, FALSE);
 	g_main_loop_run(gstreamer_receive_main_loop);
-}
-
-void MultipleRtpOpusCompositor::addDecoders() {
-	stringstream inputName;
-	inputName << "rtpopusdecoder_" << decodersCount;
-	RtpOpusDecoder* decoder = new RtpOpusDecoder(inputName.str());
-	gst_bin_add_many(GST_BIN(pipeline), decoder->queue, decoder->capsfilter, decoder->rtpOpusDepay, decoder->opusDec, NULL);
-	GstPad* opusDecSinkPad = gst_element_get_static_pad(decoder->opusDec, "sink");
-	GstCaps* caps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved, rate=48000, channels=1");
-	gst_pad_set_caps(opusDecSinkPad, caps);
-	GstPad* rtpOpusDepaySrcPad = gst_element_get_static_pad(decoder->rtpOpusDepay, "src");
-	if (!gst_element_link_many(decoder->queue, decoder->capsfilter, decoder->rtpOpusDepay,NULL)) {
-		g_printerr("Elements could not be linked.\n");
-		exit(1);
-	}
-	GstPadLinkReturn ret = gst_pad_link(rtpOpusDepaySrcPad, opusDecSinkPad);
-	if (ret != GST_PAD_LINK_OK) {
-		g_printerr("rtpOpusDepaySrcPad, opusDecSinkPad could not be linked, reason is %d\n", ret);
-		gst_object_unref(pipeline);
-		return;
-	}
-	decoders[decodersCount++] = decoder;
 }

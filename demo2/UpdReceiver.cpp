@@ -11,7 +11,8 @@ using namespace std;
 
 static void exitP(SOCKET recvSocket);
 
-UdpReceiver::UdpReceiver(RtpProcessor* rtpProcessor, int port) {
+UdpReceiver::UdpReceiver(string name, RtpProcessor* rtpProcessor, int port) {
+	this->name = name;
 	this->rtpProcessor = rtpProcessor;
 	this->srcPort = port;
 }

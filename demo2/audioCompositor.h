@@ -19,10 +19,11 @@ public:
 /// <summary>
 /// opusenc -> rtpopuspay -> rtpbin
 /// </summary>
-class RtpOpusEncoder {
+class RtpG722Encoder {
+public:
 	string name;
-	GstElement* opusenc, * rtpopuspay, * rtpbin;
-	RtpOpusEncoder(string name);
+	GstElement* audioConvert, * avencG722, * rtpg722pay, * rtpbin;
+	RtpG722Encoder(string name);
 };
 
 /// <summary>
@@ -41,7 +42,7 @@ public:
 	GstElement* udpsink;
 	RtpOpusDecoder* decoders[10];
 	int decodersCount = 0;
-	RtpOpusEncoder* encoder;
+	RtpG722Encoder* encoder;
 	GstElement* audioMixer;
 	std::string targetAddress;
 	int targetPort;

@@ -15,7 +15,7 @@
 //
 //SOCKET recvSocket = NULL;
 //atomic<bool> syncFlag = false;
-//static MultipleRtpVp8Sink* entrypoint;
+//static MultipleRtpVp8Compositor* entrypoint;
 //
 //void rtpvp8() {
 //	entrypoint->entrypoint(&syncFlag);
@@ -59,7 +59,7 @@
 //		printf("bind error with ErrorNum %d\n", WSAGetLastError());
 //		exitP();
 //	}
-//	entrypoint = new(MultipleRtpVp8Sink);
+//	entrypoint = new(MultipleRtpVp8Compositor);
 //	thread t(rtpvp8);
 //	// 接收数据报
 //	while (!syncFlag.load()) {

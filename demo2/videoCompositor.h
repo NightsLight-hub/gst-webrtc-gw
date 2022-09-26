@@ -65,9 +65,9 @@ public:
 // 多路 rtp vp8 合流，转rtp  h264 发出
 // appsrc -> output-selector -> rtpvp8Decoder[0] -> compositor -> rptvp8Encoder -> udpsink
 //                              rtpvp8Decoder[1]
-class MultipleRtpVp8Sink :public RtpProcessor {
+class MultipleRtpVp8Compositor :public RtpProcessor {
 public:
-	MultipleRtpVp8Sink(std::string targetAddress, int targetPort);
+	MultipleRtpVp8Compositor(std::string targetAddress, int targetPort);
 	GMainLoop* gstreamer_receive_main_loop = NULL;
 	GstElement* pipeline;
 	GstBus* bus;

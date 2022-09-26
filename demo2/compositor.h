@@ -1,5 +1,6 @@
 #pragma once
 #include <atomic>
+#include <string>
 
 class RtpProcessor {
 public:
@@ -9,6 +10,7 @@ public:
 
 class RtpReceiver {
 public:
+	std::string name;
 	RtpProcessor* rtpProcessor;
 	std::atomic<bool> syncFlag = false;
 	int srcPort = 3000;

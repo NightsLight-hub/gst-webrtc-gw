@@ -51,7 +51,7 @@
     <ClCompile Include="MultipleRtpOpusComp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RtpOpusEncoder.cpp">
+    <ClCompile Include="RtpG722Encoder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RtpOpusDecoder.cpp">

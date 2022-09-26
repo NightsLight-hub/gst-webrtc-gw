@@ -154,7 +154,7 @@
     <ClCompile Include="multipleRtpVp8Comp.cpp" />
     <ClCompile Include="multipleRtpvp8CompAutovideosink.cpp" />
     <ClCompile Include="RtpOpusDecoder.cpp" />
-    <ClCompile Include="RtpOpusEncoder.cpp" />
+    <ClCompile Include="RtpG722Encoder.cpp" />
     <ClCompile Include="RtpVp8Decoder.cpp" />
     <ClCompile Include="RtpH264Encoder.cpp" />
     <ClCompile Include="rtpVp9Decoder.cpp" />
