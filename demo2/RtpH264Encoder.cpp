@@ -51,8 +51,10 @@ RtpH264Encoder::RtpH264Encoder(string inputName) {
 	g_object_set(G_OBJECT(x264enc), "tune", 0x00000004, NULL);
 	//ultra fast speed!
 	g_object_set(G_OBJECT(x264enc), "speed-preset", 1, NULL);
+	g_object_set(G_OBJECT(rtph264pay), "aggregate-mode", 1, NULL);
 	g_object_set(G_OBJECT(rtph264pay), "config-interval", 10, NULL);
-	g_object_set(G_OBJECT(rtph264pay), "pt", 96, NULL);
+	g_object_set(G_OBJECT(rtph264pay), "pt", 111, NULL);
+	g_object_set(G_OBJECT(rtph264pay), "mtu", 1400, NULL);
 }
 
 void RtpH264Encoder::addToPipeline(GstElement** pipeline) {
@@ -64,11 +66,19 @@ void RtpH264Encoder::addToPipeline(GstElement** pipeline) {
 	GstPad* encSrcP = gst_element_get_static_pad(x264enc, "src");
 	GstPad* rtph264paySinkP = gst_element_get_static_pad(rtph264pay, "sink");
 	//GstCaps* caps = gst_caps_from_string("video/x-h264,  framerate=20/1, width=540, height=360, profile=baseline, alignment=au, stream-format=byte-stream");
-	GstCaps* caps = gst_caps_from_string("video/x-h264,  framerate=20/1, width=540, height=360, profile=baseline");
+	GstCaps* caps = gst_caps_from_string("video/x-h264,  framerate=20/1, width=540, height=360, profile=baseline, stream-format=byte-stream");
 	gst_pad_set_caps(encSrcP, caps);
 	//GstPad* rtpbinsrcRtcpPad = gst_element_request_pad_simple(rtpbin, "send_rtcp_src_%u");
 	if (gst_pad_link(encSrcP, rtph264paySinkP) != GST_PAD_LINK_OK) {
 		g_printerr("RtpH264Encoder:: encSrcP, rtph264paySinkP could not be linked.\n");
+		exit(1);
+	}
+	GstPad* rtph264paySrcPad = gst_element_get_static_pad(rtph264pay, "src");
+	GstPad* rtpbinSinkPad = gst_element_request_pad_simple(rtpbin, "send_rtp_sink_%u");
+
+	//GstPad* rtpbinsrcRtcpPad = gst_element_request_pad_simple(rtpbin, "send_rtcp_src_%u");
+	if (gst_pad_link(rtph264paySrcPad, rtpbinSinkPad) != GST_PAD_LINK_OK) {
+		g_printerr("rtph264paySrcPad and rtpbinSinkPad could not be linked.\n");
 		exit(1);
 	}
 }

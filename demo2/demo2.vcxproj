@@ -153,10 +153,12 @@
     <ClCompile Include="MultipleRtpOpusComp.cpp" />
     <ClCompile Include="multipleRtpVp8Comp.cpp" />
     <ClCompile Include="multipleRtpvp8CompAutovideosink.cpp" />
+    <ClCompile Include="RtpH264Decoder.cpp" />
     <ClCompile Include="RtpOpusDecoder.cpp" />
     <ClCompile Include="RtpG722Encoder.cpp" />
     <ClCompile Include="RtpVp8Decoder.cpp" />
     <ClCompile Include="RtpH264Encoder.cpp" />
+    <ClCompile Include="RtpVp8Encoder.cpp" />
     <ClCompile Include="rtpVp9Decoder.cpp" />
     <ClCompile Include="serverUpdSocket.cpp" />
     <ClCompile Include="UpdReceiver.cpp" />

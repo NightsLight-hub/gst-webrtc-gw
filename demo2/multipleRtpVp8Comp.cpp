@@ -51,6 +51,13 @@ static void handleMessage(GstBus* bus, GstMessage* msg, MultipleRtpVp8Compositor
 		g_clear_error(&err);
 		g_free(debug_info);
 		break;
+	case GST_MESSAGE_WARNING:
+		gst_message_parse_warning(msg, &err, &debug_info);
+		g_printerr("Warning received from element %s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
+		g_printerr("Debugging information: %s\n", debug_info ? debug_info : "none");
+		g_clear_error(&err);
+		g_free(debug_info);
+		break;
 	case GST_MESSAGE_EOS:
 		g_print("End-Of-Stream reached.\n");
 		g_main_loop_quit(main->gstreamer_receive_main_loop);
@@ -96,8 +103,8 @@ RtpVp8Decoder* MultipleRtpVp8Compositor::addRtpVp8Deocoders() {
 		g_printerr("Elements could not be linked.\n");
 		exit(1);
 	}*/
-	gst_bin_add_many(GST_BIN(pipeline), rtpVp8Decoder->queue, rtpVp8Decoder->capsFilter, rtpVp8Decoder->rtpvp8depay, rtpVp8Decoder->vp8dec, NULL);
-	if (!gst_element_link_many(rtpVp8Decoder->queue, rtpVp8Decoder->capsFilter, rtpVp8Decoder->rtpvp8depay, rtpVp8Decoder->vp8dec, NULL)) {
+	gst_bin_add_many(GST_BIN(pipeline), rtpVp8Decoder->queue, rtpVp8Decoder->capsFilter, rtpVp8Decoder->rtpvp8depay, rtpVp8Decoder->vp8dec, rtpVp8Decoder->videoConvert, NULL);
+	if (!gst_element_link_many(rtpVp8Decoder->queue, rtpVp8Decoder->capsFilter, rtpVp8Decoder->rtpvp8depay, rtpVp8Decoder->vp8dec, rtpVp8Decoder->videoConvert, NULL)) {
 		g_printerr("Elements could not be linked.\n");
 		exit(1);
 	}
@@ -115,6 +122,19 @@ RtpVp9Decoder* MultipleRtpVp8Compositor::addRtpVp9Deocoders() {
 		exit(1);
 	}
 	return rtpVp9Decoders[rtpvp9DecodersCount++];
+}
+
+RtpH264Decoder* MultipleRtpVp8Compositor::addRtpH264Deocoders() {
+	stringstream inputName;
+	inputName << "rtph264decoder_" << rtph264DecodersCount;
+	RtpH264Decoder* rtpH264Decoder = new RtpH264Decoder(inputName.str());
+	rtpH264Decoders[rtph264DecodersCount] = rtpH264Decoder;
+	gst_bin_add_many(GST_BIN(pipeline), rtpH264Decoder->queue, rtpH264Decoder->capsFilter, rtpH264Decoder->rtph264depay, rtpH264Decoder->x264dec, rtpH264Decoder->videoConvert, NULL);
+	if (!gst_element_link_many(rtpH264Decoder->queue, rtpH264Decoder->capsFilter, rtpH264Decoder->rtph264depay, rtpH264Decoder->x264dec, rtpH264Decoder->videoConvert, NULL)) {
+		g_printerr("Elements could not be linked.\n");
+		exit(1);
+	}
+	return rtpH264Decoders[rtph264DecodersCount++];
 }
 
 /* Create a GLib Main Loop and set it to run */
@@ -161,22 +181,20 @@ int MultipleRtpVp8Compositor::entrypoint(atomic<bool>* flag) {
 	g_object_set(G_OBJECT(udpsink), "port", targetPort, NULL);
 	g_object_set(G_OBJECT(udpsink), "async", FALSE, NULL);
 	g_object_set(G_OBJECT(udpsink), "sync", FALSE, NULL);
+	g_object_set(G_OBJECT(udpsink), "buffer-size", 1400, NULL);
+	g_object_set(G_OBJECT(udpsink), "blocksize", 1400, NULL);
+
+
 	//g_object_set(G_OBJECT(udpsinkRTCP), "host", targetAddress.c_str(), NULL);
 	//g_object_set(G_OBJECT(udpsinkRTCP), "port", 5001, NULL);
 	//g_object_set(G_OBJECT(udpsinkRTCP), "async", FALSE, NULL);
 	//g_object_set(G_OBJECT(udpsinkRTCP), "sync", FALSE, NULL);
-
 	gst_bin_add_many(GST_BIN(pipeline), appSrcs[0], appSrcs[1], appSrcs[2], appSrcs[3], compositor, udpsink, udpsinkRTCP, NULL);
 
-	rtpH264Encoder = new RtpH264Encoder("rtph264enc");
-	rtpH264Encoder->addToPipeline(&pipeline);
-	GstPad* rtph264paySrcPad = gst_element_get_static_pad(rtpH264Encoder->rtph264pay, "src");
-	GstPad* rtpbinSinkPad = gst_element_request_pad_simple(rtpH264Encoder->rtpbin, "send_rtp_sink_%u");
+	//rtpEncoder = new RtpH264Encoder("rtph264enc");
+	rtpEncoder = new RtpVp8Encoder("rtpvp8enc");
 
-	//GstPad* rtpbinsrcRtcpPad = gst_element_request_pad_simple(rtpbin, "send_rtcp_src_%u");
-	if (gst_pad_link(rtph264paySrcPad, rtpbinSinkPad) != GST_PAD_LINK_OK) {
-		g_printerr("rtph264paySrcPad and rtpbinSinkPad could not be linked.\n");
-	}
+	rtpEncoder->addToPipeline(&pipeline);
 	GstPad* decoder0_sinkPad;
 	GstPad* decoder0_srcPad;
 	GstPad* decoder1_sinkPad;
@@ -205,24 +223,47 @@ int MultipleRtpVp8Compositor::entrypoint(atomic<bool>* flag) {
 		gst_pad_set_caps(decoder2_srcPad, caps);
 		gst_pad_set_caps(decoder3_srcPad, caps);
 	}
-	else {
+	else if (codecName == "vp8") {
 		addRtpVp8Deocoders();
 		addRtpVp8Deocoders();
 		addRtpVp8Deocoders();
 		addRtpVp8Deocoders();
 		decoder0_sinkPad = gst_element_get_static_pad(rtpVp8Decoders[0]->queue, "sink");
-		decoder0_srcPad = gst_element_get_static_pad(rtpVp8Decoders[0]->vp8dec, "src");
+		decoder0_srcPad = gst_element_get_static_pad(rtpVp8Decoders[0]->videoConvert, "src");
 		decoder1_sinkPad = gst_element_get_static_pad(rtpVp8Decoders[1]->queue, "sink");
-		decoder1_srcPad = gst_element_get_static_pad(rtpVp8Decoders[1]->vp8dec, "src");
+		decoder1_srcPad = gst_element_get_static_pad(rtpVp8Decoders[1]->videoConvert, "src");
 		decoder2_sinkPad = gst_element_get_static_pad(rtpVp8Decoders[2]->queue, "sink");
-		decoder2_srcPad = gst_element_get_static_pad(rtpVp8Decoders[2]->vp8dec, "src");
+		decoder2_srcPad = gst_element_get_static_pad(rtpVp8Decoders[2]->videoConvert, "src");
 		decoder3_sinkPad = gst_element_get_static_pad(rtpVp8Decoders[3]->queue, "sink");
-		decoder3_srcPad = gst_element_get_static_pad(rtpVp8Decoders[3]->vp8dec, "src");
+		decoder3_srcPad = gst_element_get_static_pad(rtpVp8Decoders[3]->videoConvert, "src");
 		GstCaps* caps = gst_caps_from_string("video/x-raw, format=I420, width=640, height=360, framerate=20/1");
 		gst_pad_set_caps(decoder0_srcPad, caps);
 		gst_pad_set_caps(decoder1_srcPad, caps);
 		gst_pad_set_caps(decoder2_srcPad, caps);
 		gst_pad_set_caps(decoder3_srcPad, caps);
+	}
+	else if (codecName == "h264") {
+		addRtpH264Deocoders();
+		addRtpH264Deocoders();
+		addRtpH264Deocoders();
+		addRtpH264Deocoders();
+		decoder0_sinkPad = gst_element_get_static_pad(rtpH264Decoders[0]->queue, "sink");
+		decoder0_srcPad = gst_element_get_static_pad(rtpH264Decoders[0]->videoConvert, "src");
+		decoder1_sinkPad = gst_element_get_static_pad(rtpH264Decoders[1]->queue, "sink");
+		decoder1_srcPad = gst_element_get_static_pad(rtpH264Decoders[1]->videoConvert, "src");
+		decoder2_sinkPad = gst_element_get_static_pad(rtpH264Decoders[2]->queue, "sink");
+		decoder2_srcPad = gst_element_get_static_pad(rtpH264Decoders[2]->videoConvert, "src");
+		decoder3_sinkPad = gst_element_get_static_pad(rtpH264Decoders[3]->queue, "sink");
+		decoder3_srcPad = gst_element_get_static_pad(rtpH264Decoders[3]->videoConvert, "src");
+		GstCaps* caps = gst_caps_from_string("video/x-raw, format=I420, width=640, height=360, framerate=20/1");
+		gst_pad_set_caps(decoder0_srcPad, caps);
+		gst_pad_set_caps(decoder1_srcPad, caps);
+		gst_pad_set_caps(decoder2_srcPad, caps);
+		gst_pad_set_caps(decoder3_srcPad, caps);
+	}
+	else
+	{
+		exit(1);
 	}
 
 	GstPad* appsrc0Pad = gst_element_get_static_pad(appSrcs[0], "src");
@@ -296,16 +337,16 @@ int MultipleRtpVp8Compositor::entrypoint(atomic<bool>* flag) {
 	}
 
 	GstPad* compsrc = gst_element_get_static_pad(compositor, "src");
-	GstPad* rtpH264EncoderSrcPad = gst_element_get_static_pad(rtpH264Encoder->rtpbin, "send_rtp_src_0");
-	GstPad* rtpH264EncoderSinkPad = gst_element_get_static_pad(rtpH264Encoder->videoConvert, "sink");
-	GstPadLinkReturn padlinkRet = gst_pad_link(compsrc, rtpH264EncoderSinkPad);
+	GstPad* rtpEncoderSrcPad = gst_element_get_static_pad(rtpEncoder->rtpbin, "send_rtp_src_0");
+	GstPad* rtpEncoderSinkPad = gst_element_get_static_pad(rtpEncoder->videoConvert, "sink");
+	GstPadLinkReturn padlinkRet = gst_pad_link(compsrc, rtpEncoderSinkPad);
 	if (padlinkRet != GST_PAD_LINK_OK) {
 		g_printerr("compsrc, rtpH264Encoder->sinkPad could not be linked.\n");
 		gst_object_unref(pipeline);
 		return -1;
 	}
 	GstPad* updsinkSinkPad = gst_element_get_static_pad(udpsink, "sink");
-	padlinkRet = gst_pad_link(rtpH264EncoderSrcPad, updsinkSinkPad);
+	padlinkRet = gst_pad_link(rtpEncoderSrcPad, updsinkSinkPad);
 	if (GST_PAD_LINK_OK != padlinkRet) {
 		g_printerr("rtpH264EncoderSrcPad, updsinkSinkPad could not be linked., ret is %d\n", padlinkRet);
 		gst_object_unref(pipeline);
@@ -329,8 +370,6 @@ int MultipleRtpVp8Compositor::entrypoint(atomic<bool>* flag) {
 	this->mainLoop();
 
 	gst_object_unref(updsinkSinkPad);
-	gst_element_release_request_pad(rtpH264Encoder->rtpbin, rtpbinSinkPad);
-	gst_object_unref(rtph264paySrcPad);
 	gst_object_unref(bus);
 	gst_object_unref(appsrc0Pad);
 	gst_object_unref(appsrc1Pad);

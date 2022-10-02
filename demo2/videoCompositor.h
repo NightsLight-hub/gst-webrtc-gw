@@ -20,6 +20,20 @@ public:
 	void generatePad();
 };
 
+class RtpH264Decoder {
+public:
+	RtpH264Decoder(std::string inputName);
+	std::string name;
+	GstElement* queue;
+	GstElement* capsFilter;
+	GstElement* rtph264depay;
+	GstElement* x264dec;
+	GstElement* videoConvert;
+public:
+	void addToPipeline(GstElement* pipeline);
+	void generatePad();
+};
+
 class RtpVp9Decoder {
 public:
 	RtpVp9Decoder(std::string inputName);
@@ -34,19 +48,32 @@ public:
 	void generatePad();
 };
 
-/// <summary>
-/// videoconvert -> x264enc -> rtph264pay -> rtpbin
-/// </summary>
-class RtpH264Encoder {
+class RtpEncoder {
 public:
-	RtpH264Encoder(std::string inputName);
 	std::string name;
 	GstElement* videoConvert;
 	GstElement* queue;
-	GstElement* x264enc;
-	GstElement* rtph264pay;
 	GstElement* rtpbin;
 public:
+	virtual void addToPipeline(GstElement** pipeline) = 0;
+};
+
+/// <summary>
+/// videoconvert -> x264enc -> rtph264pay -> rtpbin
+/// </summary>
+class RtpH264Encoder: public RtpEncoder {
+public:
+	RtpH264Encoder(std::string inputName);
+	GstElement* x264enc;
+	GstElement* rtph264pay;
+	void addToPipeline(GstElement** pipeline);
+};
+
+class RtpVp8Encoder: public RtpEncoder {
+public:
+	RtpVp8Encoder(std::string inputName);
+	GstElement* vp8enc;
+	GstElement* rtpvp8pay;
 	void addToPipeline(GstElement** pipeline);
 };
 
@@ -76,9 +103,10 @@ public:
 	GstElement* compositor;
 	GstElement* udpsink;
 	GstElement* udpsinkRTCP;
-	RtpH264Encoder* rtpH264Encoder;
+	RtpEncoder* rtpEncoder;
 	RtpVp8Decoder* rtpVp8Decoders[10];
 	RtpVp9Decoder* rtpVp9Decoders[10];
+	RtpH264Decoder* rtpH264Decoders[10];
 	// 发送的目标地址
 	std::string targetAddress;
 	// 目标端口
@@ -91,12 +119,17 @@ private:
 	int appSrcCount;
 	int rtpvp8DecodersCount = 0;
 	int rtpvp9DecodersCount = 0;
+	int rtph264DecodersCount = 0;
+
 	// glibc 循环
 	void mainLoop();
 	// 添加一个vp8解码器
 	RtpVp8Decoder* addRtpVp8Deocoders();
 	// 添加pv9解码器
 	RtpVp9Decoder* addRtpVp9Deocoders();
+
+	RtpH264Decoder* addRtpH264Deocoders();
+
 	// 创建一个数据源
 	void createAppSrc();
 };

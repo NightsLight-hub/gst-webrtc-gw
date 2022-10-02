@@ -37,22 +37,24 @@ void static runRtpAudioProcessor(atomic<bool>* flag) {
 int main()
 {
 	// rtp vp8 解码 - 合流 - 下沉
-	rtpVideoProcessor = new MultipleRtpVp8Compositor("172.18.39.162", 51000);
+	rtpVideoProcessor = new MultipleRtpVp8Compositor("127.0.0.1", 5004);
+	//rtpVideoProcessor = new MultipleRtpVp8Compositor("127.0.0.1", 6666);
+	// 
 	// rtp opus 解码 - 合流 - 下沉
-	rtpAudioProcessor = new MultipleRtpOpusCompositor("172.18.39.162", 51001);
+	//rtpAudioProcessor = new MultipleRtpOpusCompositor("172.18.39.162", 51001);
 	// udp接收器 3000端口
-	rtpVideoReceiver = new UdpReceiver("videoReceiver", rtpVideoProcessor, 3000);
+	rtpVideoReceiver = new UdpReceiver("videoReceiver", rtpVideoProcessor, 30000);
 	// udp接收器 3001端口
-	rtpAudioReceiver = new UdpReceiver("audioReceiver", rtpAudioProcessor, 3001);
+	//rtpAudioReceiver = new UdpReceiver("audioReceiver", rtpAudioProcessor, 3001);
 
-	thread udpAudioReceive(runRtpAudioReceiver);
-	thread rtpAudioProcess(runRtpAudioProcessor, &(rtpAudioReceiver->syncFlag));
+	//thread udpAudioReceive(runRtpAudioReceiver);
+	//thread rtpAudioProcess(runRtpAudioProcessor, &(rtpAudioReceiver->syncFlag));
 	thread udpVideoReceive(runRtpVideoReceiver);
 	thread rtpVideoProcess(runRtpVideoProcessor, &(rtpVideoReceiver->syncFlag));
 
-	udpAudioReceive.join();
+	//udpAudioReceive.join();
 	udpVideoReceive.join();
-	rtpAudioProcess.join();
+	//rtpAudioProcess.join();
 	rtpVideoProcess.join();
 
 	delete(rtpVideoProcessor);
