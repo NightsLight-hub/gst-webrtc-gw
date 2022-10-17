@@ -83,6 +83,10 @@ RtpVp8Decoder* MultipleRtpVp8AutoVideoSink::addRtpVp8Deocoders() {
 	return rtpVp8Decoders[rtpvp8DecodersCount++];
 }
 
+void MultipleRtpVp8AutoVideoSink::quit() {
+	g_main_loop_quit(this->gstreamer_receive_main_loop);
+}
+
 
 /* Create a GLib Main Loop and set it to run */
 void MultipleRtpVp8AutoVideoSink::mainLoop() {

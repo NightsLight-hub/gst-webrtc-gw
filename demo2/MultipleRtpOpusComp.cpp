@@ -63,6 +63,10 @@ MultipleRtpOpusCompositor::MultipleRtpOpusCompositor(string targetAddress, int t
 	this->targetPort = targetPort;
 }
 
+void MultipleRtpOpusCompositor::quit() {
+	g_main_loop_quit(this->gstreamer_receive_main_loop);
+}
+
 void MultipleRtpOpusCompositor::createAppSrc() {
 	char name[10];
 	sprintf_s(name, 10, "%s_%d", "src", appSrcCount);

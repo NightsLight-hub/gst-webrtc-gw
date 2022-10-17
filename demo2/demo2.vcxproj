@@ -147,12 +147,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="compositor.cpp" />
     <ClCompile Include="helper.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MediaProcessManager.cpp" />
+    <ClCompile Include="MediaProcessTask.cpp" />
+    <ClCompile Include="mediaProcessTask.h" />
     <ClCompile Include="MultipleRtpOpusComp.cpp" />
     <ClCompile Include="multipleRtpVp8Comp.cpp" />
     <ClCompile Include="multipleRtpvp8CompAutovideosink.cpp" />
+    <ClCompile Include="rest.cpp" />
     <ClCompile Include="RtpH264Decoder.cpp" />
     <ClCompile Include="RtpOpusDecoder.cpp" />
     <ClCompile Include="RtpG722Encoder.cpp" />
@@ -161,12 +164,14 @@
     <ClCompile Include="RtpVp8Encoder.cpp" />
     <ClCompile Include="rtpVp9Decoder.cpp" />
     <ClCompile Include="serverUpdSocket.cpp" />
+    <ClCompile Include="UdpReceiverLinux.cpp" />
     <ClCompile Include="UpdReceiver.cpp" />
     <ClCompile Include="videoPlay.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audioCompositor.h" />
     <ClInclude Include="compositor.h" />
+    <ClInclude Include="rest.h" />
     <ClInclude Include="rtpReceiver.h" />
     <ClInclude Include="videoCompositor.h" />
     <ClInclude Include="helper.h" />

@@ -52,4 +52,5 @@ private:
 	void addDecoders();
 	void mainLoop();
 	void createAppSrc();
+	void quit();
 };

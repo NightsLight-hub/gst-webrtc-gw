@@ -115,6 +115,7 @@ public:
 	void receivePushBuffer(void* buffer, int len, char type);
 	// Èë¿Úº¯Êý
 	int entrypoint(std::atomic<bool>* flag);
+	void quit();
 private:
 	int appSrcCount;
 	int rtpvp8DecodersCount = 0;
@@ -153,6 +154,7 @@ public:
 	void receivePushBuffer(void* buffer, int len, char type);
 	int entrypoint(std::atomic<bool>* flag);
 	RtpVp8Decoder* addRtpVp8Deocoders();
+	void quit();
 private:
 	void mainLoop();
 };

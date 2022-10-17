@@ -13,7 +13,8 @@
 /// </summary>
 
 using namespace std;
-static const string codecName = "vp8";
+static const string codecName = "vp9";
+//static const string codecName = "h264";
 
 MultipleRtpVp8Compositor::MultipleRtpVp8Compositor(string targetAddress, int targetPort) {
 	this->targetAddress = targetAddress;
@@ -137,6 +138,10 @@ RtpH264Decoder* MultipleRtpVp8Compositor::addRtpH264Deocoders() {
 	return rtpH264Decoders[rtph264DecodersCount++];
 }
 
+void MultipleRtpVp8Compositor::quit() {
+	g_main_loop_quit(this->gstreamer_receive_main_loop);
+}
+
 /* Create a GLib Main Loop and set it to run */
 void MultipleRtpVp8Compositor::mainLoop() {
 	this->gstreamer_receive_main_loop = g_main_loop_new(NULL, FALSE);
@@ -184,15 +189,14 @@ int MultipleRtpVp8Compositor::entrypoint(atomic<bool>* flag) {
 	g_object_set(G_OBJECT(udpsink), "buffer-size", 1400, NULL);
 	g_object_set(G_OBJECT(udpsink), "blocksize", 1400, NULL);
 
-
 	//g_object_set(G_OBJECT(udpsinkRTCP), "host", targetAddress.c_str(), NULL);
 	//g_object_set(G_OBJECT(udpsinkRTCP), "port", 5001, NULL);
 	//g_object_set(G_OBJECT(udpsinkRTCP), "async", FALSE, NULL);
 	//g_object_set(G_OBJECT(udpsinkRTCP), "sync", FALSE, NULL);
 	gst_bin_add_many(GST_BIN(pipeline), appSrcs[0], appSrcs[1], appSrcs[2], appSrcs[3], compositor, udpsink, udpsinkRTCP, NULL);
 
-	//rtpEncoder = new RtpH264Encoder("rtph264enc");
-	rtpEncoder = new RtpVp8Encoder("rtpvp8enc");
+	rtpEncoder = new RtpH264Encoder("rtph264enc");
+	//rtpEncoder = new RtpVp8Encoder("rtpvp8enc");
 
 	rtpEncoder->addToPipeline(&pipeline);
 	GstPad* decoder0_sinkPad;
@@ -263,7 +267,8 @@ int MultipleRtpVp8Compositor::entrypoint(atomic<bool>* flag) {
 	}
 	else
 	{
-		exit(1);
+		cerr << "not support codec " << codecName << endl;
+		return -1;
 	}
 
 	GstPad* appsrc0Pad = gst_element_get_static_pad(appSrcs[0], "src");
@@ -375,6 +380,9 @@ int MultipleRtpVp8Compositor::entrypoint(atomic<bool>* flag) {
 	gst_object_unref(appsrc1Pad);
 	gst_object_unref(appsrc2Pad);
 	gst_object_unref(appsrc3Pad);
+	gst_object_unref(compsrc);
+	gst_object_unref(rtpEncoderSrcPad);
+	gst_object_unref(rtpEncoderSinkPad);
 	gst_element_release_request_pad(compositor, comp_sink0);
 	gst_element_release_request_pad(compositor, comp_sink1);
 	gst_element_release_request_pad(compositor, comp_sink2);

@@ -51,6 +51,8 @@ RtpH264Encoder::RtpH264Encoder(string inputName) {
 	g_object_set(G_OBJECT(x264enc), "tune", 0x00000004, NULL);
 	//ultra fast speed!
 	g_object_set(G_OBJECT(x264enc), "speed-preset", 1, NULL);
+	g_object_set(G_OBJECT(x264enc), "key-int-max", 5, NULL);
+
 	g_object_set(G_OBJECT(rtph264pay), "aggregate-mode", 1, NULL);
 	g_object_set(G_OBJECT(rtph264pay), "config-interval", 10, NULL);
 	g_object_set(G_OBJECT(rtph264pay), "pt", 111, NULL);
@@ -65,7 +67,6 @@ void RtpH264Encoder::addToPipeline(GstElement** pipeline) {
 	}
 	GstPad* encSrcP = gst_element_get_static_pad(x264enc, "src");
 	GstPad* rtph264paySinkP = gst_element_get_static_pad(rtph264pay, "sink");
-	//GstCaps* caps = gst_caps_from_string("video/x-h264,  framerate=20/1, width=540, height=360, profile=baseline, alignment=au, stream-format=byte-stream");
 	GstCaps* caps = gst_caps_from_string("video/x-h264,  framerate=20/1, width=540, height=360, profile=baseline, stream-format=byte-stream");
 	gst_pad_set_caps(encSrcP, caps);
 	//GstPad* rtpbinsrcRtcpPad = gst_element_request_pad_simple(rtpbin, "send_rtcp_src_%u");

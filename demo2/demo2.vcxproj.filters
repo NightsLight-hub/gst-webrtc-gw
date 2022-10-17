@@ -39,9 +39,6 @@
     <ClCompile Include="rtpVp9Decoder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="compositor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="UpdReceiver.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -63,6 +60,21 @@
     <ClCompile Include="RtpVp8Encoder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="UdpReceiverLinux.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="rest.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="mediaProcessTask.h">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaProcessTask.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaProcessManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="videoCompositor.h">
@@ -78,6 +90,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="rtpReceiver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="rest.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
